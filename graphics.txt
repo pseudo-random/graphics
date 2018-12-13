@@ -1,0 +1,111 @@
+; MIT License
+;
+; Copyright (c) 2018 pseudo-random <josh.leh.2018@gmail.com>
+;
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+
+(import svg)
+
+; Colors
+(def black {:red 0 :green 0 :blue 0})
+(def white {:red 1 :green 1 :blue 1})
+(def red {:red 1 :green 0 :blue 0})
+(def green {:red 0 :green 1 :blue 0})
+(def blue {:red 0 :green 0 :blue 1})
+(def purple {:red 1 :green 0 :blue 1})
+(def yellow {:red 1 :green 1 :blue 0})
+(def cyan {:red 0 :green 1 :blue 1})
+
+(def default-stroke black)
+(def default-fill black)
+(def default-stroke-width 1)
+
+; Shapes
+(defn circle [pos radius]
+  (ellipse pos [radius radius]))
+
+(defn ellipse [pos size]
+  {:type   :ellipse
+   :pos    pos
+   :size   size
+   :stroke default-stroke
+   :fill   default-fill
+   :stroke-width default-stroke-width})
+
+(defn rect [pos size]
+  {:type   :rect
+   :pos    pos
+   :size   size
+   :stroke default-stroke
+   :fill   default-fill
+   :stroke-width default-stroke-width})
+
+(defn line [from to]
+  {:type   :line
+   :pos    from
+   :size   (zip-with to from -)
+   :stroke default-stroke
+   :fill   default-fill
+   :stroke-width default-stroke-width})
+
+(defn text [pos size str]
+  {:type :text
+   :text str
+   :pos  pos
+   :size [0 0]
+   :stroke default-stroke
+   :fill   default-fill
+   :stroke-width default-stroke-width})
+
+(defn polygon [points]
+  (-> (zip points (rest points))
+      (map (fn [pair]
+        (let [from (first pair)
+              to   (second pair)]
+          (line from to))))))
+
+(defn closed-polygon [points]
+  (polygon (append points (first points))))
+
+; Transform
+(defn translate [shape pos]
+  (if (list? shape)
+    (map shape (curry translate pos))
+    (insert shape :pos (zip-with shape/pos pos +))))
+
+(defn scale [shape factor]
+  (if (list? shape)
+    (map shape (curry scale factor))
+    (-> (insert shape :pos (zip-with shape/pos factor *))
+        (insert :size (zip-with shape/size factor *)))))
+
+; Effects
+(defn apply-effect [shape effect]
+  (if (list? shape)
+    (map shape (curry apply-effect effect))
+    (merge effect shape)))
+
+(defn stroke [shape color]
+  (apply-effect shape {:stroke color}))
+
+(defn fill [shape color]
+  (apply-effect shape {:fill color}))
+
+(defn stroke-width [shape width]
+  (apply-effect shape {:stroke-width width}))

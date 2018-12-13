@@ -1,0 +1,61 @@
+; MIT License
+;
+; Copyright (c) 2018 pseudo-random <josh.leh.2018@gmail.com>
+;
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+
+(defn to-web-color [color]
+  (format "rgba(" (* color/red 255) ","
+                  (* color/green 255) ","
+                  (* color/blue 255) ","
+                  (or color/alpha 1) ")"))
+
+(defn shape-to-svg [shape]
+  (cond
+    (list? shape)           (concat [:g {}] (map shape shape-to-svg))
+    (= shape/type :line)    (let [to (zip-with shape/pos shape/size +)]
+                              [:line {:x1 (first shape/pos)
+                                      :y1 (second shape/pos)
+                                      :x2 (first to)
+                                      :y2 (second to)
+                                      :fill (to-web-color shape/fill)
+                                      :stroke-width shape/stroke-width
+                                      :stroke (to-web-color shape/stroke)}])
+    (= shape/type :ellipse) [:ellipse {:cx (first shape/pos)
+                                       :cy (second shape/pos)
+                                       :rx (first shape/size)
+                                       :ry (second shape/size)
+                                       :fill (to-web-color shape/fill)
+                                       :stroke-width shape/stroke-width
+                                       :stroke (to-web-color shape/stroke)}]
+    (= shape/type :rect)    [:rect {:x (first shape/pos)
+                                    :y (second shape/pos)
+                                    :width (first shape/size)
+                                    :height (second shape/size)
+                                    :fill (to-web-color shape/fill)
+                                    :stroke-width shape/stroke-width
+                                    :stroke (to-web-color shape/stroke)}]
+    (= shape/type :text)    [:text {:x (first shape/pos)
+                                    :y (second shape/pos)}
+                                   shape/text]))
+
+(defn to-svg [shape]
+  [:svg {} (shape-to-svg shape)])
+
+; TODO: write-svg!
