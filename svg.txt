@@ -26,17 +26,20 @@
                   (* color/blue 255) ","
                   (or color/alpha 1) ")"))
 
+(defn to-path-command [args cmd]
+  (format cmd " " (-> (map args ->str)
+                      (interpose " "))))
+
+(defn to-path [points]
+  (-> (rest points)
+      (map (curry to-path-command "L"))
+      (prepend (-> (first points)
+                   (to-path-command "M")))
+      (interpose " ")))
+
 (defn shape-to-svg [shape]
   (cond
     (list? shape)           (concat [:g {}] (map shape shape-to-svg))
-    (= shape/type :line)    (let [to (zip-with shape/pos shape/size +)]
-                              [:line {:x1 (first shape/pos)
-                                      :y1 (second shape/pos)
-                                      :x2 (first to)
-                                      :y2 (second to)
-                                      :fill (to-web-color shape/fill)
-                                      :stroke-width shape/stroke-width
-                                      :stroke (to-web-color shape/stroke)}])
     (= shape/type :ellipse) [:ellipse {:cx (first shape/pos)
                                        :cy (second shape/pos)
                                        :rx (first shape/size)
@@ -44,10 +47,7 @@
                                        :fill (to-web-color shape/fill)
                                        :stroke-width shape/stroke-width
                                        :stroke (to-web-color shape/stroke)}]
-    (= shape/type :rect)    [:rect {:x (first shape/pos)
-                                    :y (second shape/pos)
-                                    :width (first shape/size)
-                                    :height (second shape/size)
+    (= shape/type :polygon) [:path {:d (to-path shape/points)
                                     :fill (to-web-color shape/fill)
                                     :stroke-width shape/stroke-width
                                     :stroke (to-web-color shape/stroke)}]

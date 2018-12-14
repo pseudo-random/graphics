@@ -37,9 +37,6 @@
 (def default-stroke-width 1)
 
 ; Shapes
-(defn circle [pos radius]
-  (ellipse pos [radius radius]))
-
 (defn ellipse [pos size]
   {:type   :ellipse
    :pos    pos
@@ -48,23 +45,30 @@
    :fill   default-fill
    :stroke-width default-stroke-width})
 
-(defn rect [pos size]
-  {:type   :rect
-   :pos    pos
-   :size   size
+(defn circle [pos radius]
+  (ellipse pos [radius radius]))
+
+(defn polygon [points]
+  {:type   :polygon
+   :points points
    :stroke default-stroke
    :fill   default-fill
    :stroke-width default-stroke-width})
+
+(defn closed-polygon [points]
+  (polygon (append points (first points))))
+
+(defn rect [pos size]
+  (let [x0 (first pos)
+        y0 (second pos)
+        x1 (+ (first pos) (first size))
+        y1 (+ (second pos) (second size))]
+    (closed-polygon [[x0 y0] [x1 y0] [x1 y1] [x0 y1]])))
 
 (defn line [from to]
-  {:type   :line
-   :pos    from
-   :size   (zip-with to from -)
-   :stroke default-stroke
-   :fill   default-fill
-   :stroke-width default-stroke-width})
+  (polygon [from to]))
 
-(defn text [pos size str]
+(defn text [pos str]
   {:type :text
    :text str
    :pos  pos
@@ -73,27 +77,26 @@
    :fill   default-fill
    :stroke-width default-stroke-width})
 
-(defn polygon [points]
-  (-> (zip points (rest points))
-      (map (fn [pair]
-        (let [from (first pair)
-              to   (second pair)]
-          (line from to))))))
 
-(defn closed-polygon [points]
-  (polygon (append points (first points))))
+(defn polygon? [shape] (= shape/type :polygon))
+(defn ellipse? [shape] (= shape/type :ellipse))
+(defn text? [shape] (= shape/type :text))
 
 ; Transform
 (defn translate [shape pos]
-  (if (list? shape)
-    (map shape (curry translate pos))
-    (insert shape :pos (zip-with shape/pos pos +))))
+  (cond
+    (list? shape)    (map shape (curry translate pos))
+    (polygon? shape) (insert shape :points
+                             (map shape/points (curry zip-with pos +)))
+    :else            (insert shape :pos (zip-with shape/pos pos +))))
 
 (defn scale [shape factor]
-  (if (list? shape)
-    (map shape (curry scale factor))
-    (-> (insert shape :pos (zip-with shape/pos factor *))
-        (insert :size (zip-with shape/size factor *)))))
+  (cond
+    (list? shape)    (map shape (curry scale factor))
+    (polygon? shape) (insert shape :points
+                             (map shape/points (curry zip-with factor *)))
+    :else            (-> (insert shape :pos (zip-with shape/pos factor *))
+                         (insert :size (zip-with shape/size factor *)))))
 
 ; Effects
 (defn apply-effect [shape effect]
