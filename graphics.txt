@@ -110,5 +110,8 @@
 (defn fill [shape color]
   (apply-effect shape {:fill color}))
 
+(defn no-stroke [shape] (stroke shape nil))
+(defn no-fill [shape] (fill shape nil))
+
 (defn stroke-width [shape width]
   (apply-effect shape {:stroke-width width}))

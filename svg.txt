@@ -21,10 +21,12 @@
 ; SOFTWARE.
 
 (defn to-web-color [color]
-  (format "rgba(" (* color/red 255) ","
-                  (* color/green 255) ","
-                  (* color/blue 255) ","
-                  (or color/alpha 1) ")"))
+  (if (nil? color)
+    "none"
+    (format "rgba(" (* color/red 255) ","
+                    (* color/green 255) ","
+                    (* color/blue 255) ","
+                    (or color/alpha 1) ")")))
 
 (defn to-path-command [args cmd]
   (format cmd " " (-> (map args ->str)
