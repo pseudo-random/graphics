@@ -68,11 +68,12 @@
 (defn line [from to]
   (polygon [from to]))
 
-(defn text [pos str]
+(defn text [pos str anchor]
   {:type :text
    :text str
    :pos  pos
    :size [0 0]
+   :anchor anchor
    :stroke default-stroke
    :fill   default-fill
    :stroke-width default-stroke-width})
@@ -92,6 +93,8 @@
 
 (defn scale [shape factor]
   (cond
+    (text? shape)    (-> (insert shape :pos (zip-with shape/pos factor *))
+                         (insert :anchor (zip-with shape/anchor factor *)))
     (list? shape)    (map shape (curry scale factor))
     (polygon? shape) (insert shape :points
                              (map shape/points (curry zip-with factor *)))
