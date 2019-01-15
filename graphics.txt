@@ -21,6 +21,7 @@
 ; SOFTWARE.
 
 (import svg)
+(import math)
 
 ; Colors
 (def black {:red 0 :green 0 :blue 0})
@@ -100,6 +101,25 @@
                              (map shape/points (curry zip-with factor *)))
     :else            (-> (insert shape :pos (zip-with shape/pos factor *))
                          (insert :size (zip-with shape/size factor *)))))
+
+(defn to-radians [deg]
+  (* (/ deg 180) math/PI))
+
+(defn to-degrees [rad]
+  (* (/ rad math/PI) 180))
+
+(defn rotate-point [point angle]
+  (let [x (first point)
+        y (second point)]
+    [(- (* x (math/cos angle)) (* y (math/sin angle)))
+     (+ (* x (math/sin angle)) (* y (math/cos angle)))]))
+
+(defn rotate [shape angle]
+  (cond
+    (list? shape)    (map shape (curry rotate angle))
+    (polygon? shape) (insert shape :points
+                             (map shape/points (curry rotate-point angle)))
+    :else            (insert shape :pos (rotate-point shape/pos angle))))
 
 ; Effects
 (defn apply-effect [shape effect]
